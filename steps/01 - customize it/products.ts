@@ -1,3 +1,5 @@
+// This is a customized version of products.ts from Pointer.gg's tutorial for Solana Pay. I added a product and changed the other items around. I also updated the item descriptions.
+
 export const products = [
   {
     id: 'cupcake-single',
