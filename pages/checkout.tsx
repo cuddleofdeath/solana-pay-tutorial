@@ -1,4 +1,3 @@
-import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { Keypair, Transaction } from '@solana/web3.js'
 import { useRouter } from 'next/router'
@@ -12,9 +11,14 @@ import {
   MakeTransactionOutputData,
 } from './api/makeTransaction'
 
+import { useConnection, useWallet } from '@solana/wallet-adapter-react'
+
 export default function Checkout() {
   const router = useRouter()
-  const { publicKey } = useWallet()
+  const { connection } = useConnection()
+  const { publicKey, sendTransaction } = useWallet()
+
+  // unchanged below here
 
   // State to hold API response fields
   const [transaction, setTransaction] = useState<Transaction | null>(null)
@@ -80,6 +84,30 @@ export default function Checkout() {
   useEffect(() => {
     getTransaction()
   }, [publicKey])
+
+  // unchanged code before this
+  useEffect(() => {
+    getTransaction()
+  }, [publicKey])
+
+  // Send the fetched transaction to the connected wallet
+  async function trySendTransaction() {
+    if (!transaction) {
+      return
+    }
+    try {
+      await sendTransaction(transaction, connection)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  // Send the transaction once it's fetched
+  useEffect(() => {
+    trySendTransaction()
+  }, [transaction])
+
+  // render code unchanged
 
   if (!publicKey) {
     return (
