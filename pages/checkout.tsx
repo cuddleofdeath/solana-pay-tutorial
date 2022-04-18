@@ -13,12 +13,16 @@ import {
 
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 
+// New import
+import {
+  findTransactionSignature,
+  FindTransactionSignatureError,
+} from '@solana/pay'
+
 export default function Checkout() {
   const router = useRouter()
   const { connection } = useConnection()
   const { publicKey, sendTransaction } = useWallet()
-
-  // unchanged below here
 
   // State to hold API response fields
   const [transaction, setTransaction] = useState<Transaction | null>(null)
@@ -85,11 +89,6 @@ export default function Checkout() {
     getTransaction()
   }, [publicKey])
 
-  // unchanged code before this
-  useEffect(() => {
-    getTransaction()
-  }, [publicKey])
-
   // Send the fetched transaction to the connected wallet
   async function trySendTransaction() {
     if (!transaction) {
@@ -107,13 +106,34 @@ export default function Checkout() {
     trySendTransaction()
   }, [transaction])
 
-  // render code unchanged
+  // Check every 0.5s if the transaction is completed
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        // Check if there is any transaction for the reference
+        const signatureInfo = await findTransactionSignature(
+          connection,
+          reference
+        )
+        router.push('/confirmed')
+      } catch (e) {
+        if (e instanceof FindTransactionSignatureError) {
+          // No transaction found yet, ignore this error
+          return
+        }
+        console.error('Unknown error', e)
+      }
+    }, 500)
+    return () => {
+      clearInterval(interval)
+    }
+  }, [])
 
   if (!publicKey) {
     return (
       <div className="flex flex-col items-center gap-8">
         <div>
-          <BackLink href="/">Cancel</BackLink>
+          <BackLink href="/buy">Cancel</BackLink>
         </div>
 
         <WalletMultiButton />
@@ -126,7 +146,7 @@ export default function Checkout() {
   return (
     <div className="flex flex-col items-center gap-8">
       <div>
-        <BackLink href="/">Cancel</BackLink>
+        <BackLink href="/buy">Cancel</BackLink>
       </div>
 
       <WalletMultiButton />
